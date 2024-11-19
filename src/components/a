@@ -1,20 +1,17 @@
 import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from "cytoscape";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import dagre from "cytoscape-dagre";
-import Graph from "./Graph.jsx"
-import Button from 'react-bootstrap/Button';
+//import { Chart } from "react-google-charts";
+import ApexChart from "apexcharts";
+import Chart from "react-apexcharts";
+import example_tree from "./../files/exampleTree.json";
+
 
 export default function CloneTree({ nodes, edges }) {
+  // todo tooltip when hover on node
+  // todo for combined nodes, include buttons corresponding to displaying graph for each node component
   cytoscape.use(dagre);
-
-  const [all_ints_in_current_clicked_node, set_all_ints_in_current_clicked_node] = useState([])
-  const [curr_node_to_display_graph_for, set_curr_node_to_display_graph_for] = useState(null);
-
-  useEffect(() => {
-    set_all_ints_in_current_clicked_node([])
-    set_curr_node_to_display_graph_for(null)
-  }, [nodes]);
 
   const elements = [];
   for (let i = 0; i < nodes.length; i++) {
@@ -27,6 +24,69 @@ export default function CloneTree({ nodes, edges }) {
   }
 
   let myCyRef;
+
+  const myLabels = []
+  for (let i=0; i<1000; i++){
+    myLabels.push(i.toString())
+  }
+
+  const apexOptions = {
+    chart: {
+      height: "100px",
+      width: "500px",
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    legend: {
+      show: false
+    },
+    colors: ['#32a852', '#E91E63', '#32a852', "#000000"],
+    labels: myLabels,
+    markers: {
+      size: 10,
+    },
+    yaxis: 
+      {
+        title: {
+          text: 'Number of Copies',
+        },
+      },
+    opposite: true,
+  };
+  const apexSeries = [{
+    name: '# Paternal Copies',
+    type: 'line',
+    data: [2, 2]
+  }, {
+    name: '# Maternal Copies',
+    type: 'line',
+    data: [1.9, 1.9]
+  }, 
+  {
+    name: '# Maternal Copies',
+    type: 'line',
+    data: [null, 3, 3]
+  },/*
+  {
+    name: 'ScatterTest',
+    type: 'scatter',
+    data: [8,7]
+  }*/]
+
+  const [data, set_data] = useState([
+    ["Segment ID", "# Maternal Copies", "# Paternal Copies"],
+    [0, 0, 0],
+  ]);
+  const options = {
+    title: "Information of Selected Node",
+    hAxis: { title: "Genomic Position" },
+    vAxis: { title: "Number of Copies" },
+    explorer: {
+      maxZoomOut: 2,
+      keepInBounds: true,
+    },
+  };
 
   const layout = {
     name: "dagre",
@@ -60,7 +120,7 @@ export default function CloneTree({ nodes, edges }) {
         "border-color": "#AAD8FF",
         "border-opacity": "0.5",
         "background-color": "#77828C",
-        color: "black",
+        color: "white",
         width: 75,
         height: 30,
 
@@ -90,12 +150,9 @@ export default function CloneTree({ nodes, edges }) {
         }}
       >
         <div
-          id="per-node-buttons"
           style={{
             height: "80vh",
             width: "auto",
-            display:"flex",
-            flexDirection:"row",
             border: "2px solid darkblue",
             borderRadius: "0.65rem",
             overflow: "scroll",
@@ -112,58 +169,48 @@ export default function CloneTree({ nodes, edges }) {
               myCyRef = cy;
               cy.on("tap", "node", (evt) => {
                 var node = evt.target;
-                let raw_node_label = node.data().label
-                let node_label_parts = raw_node_label.split(',')
-                let int_node_label_parts = []
-                for(let i=0; i<node_label_parts.length; i++){
-                  int_node_label_parts.push(parseInt(node_label_parts[i]))
-                }
+                console.log("EVT", evt);
+                console.log("TARGET", node.data());
+                console.log("TARGET TYPE", typeof node[0]);
 
-                // if there's only one int, make this empty
-                if (int_node_label_parts.length <= 1){
-                  set_all_ints_in_current_clicked_node([])
-                  let node_label = node.data().label;
-                  set_curr_node_to_display_graph_for(node_label);
+                // change data and options
+                let node_idx = node.data().id;
+                const tmp_data = [
+                  ["Segment ID", "# Maternal Copies", "# Paternal Copies"],
+                ];
+                let segments =
+                  example_tree["tree"]["nodes"][node_idx]["segments"];
+                for (let i = 0; i < segments.length; i++) {
+                  let x = segments[i]["x"];
+                  let y = segments[i]["y"];
+                  tmp_data.push([i, x, y]);
                 }
-                else{
-                  set_curr_node_to_display_graph_for(null)
-                  set_all_ints_in_current_clicked_node(int_node_label_parts)
-                }
+                set_data(tmp_data);
               });
               var layout = cy.makeLayout({ name: "dagre" });
               layout.run();
             }}
           />
-          <div
-            style={{
-              display:"flex",
-              flexDirection:"column",
-              height:"30vh",
-              gap: "10px",
-              marginTop: "5rem",
-              flexWrap: "wrap",
-            }}
-          >
-            {all_ints_in_current_clicked_node.map((ele) => (
-              <Button class="btn btn-sm" variant="outline-secondary" onClick={() => {set_curr_node_to_display_graph_for(ele); console.log("ele is", ele)}}>Node {ele}</Button>
-            ))}
-          </div>
         </div>
         <div
           style={{
-            height: "35vh",
+            height: "50vh",
             width: "auto",
             border: "2px solid darkblue",
             borderRadius: "0.65rem",
             overflow: "scroll",
             marginTop: "1rem",
-            paddingLeft:"2rem",
             paddingTop: "1.5rem",
-            paddingBottom: "1.5rem",
-            paddingRight:"3rem",
           }}
         >
-          <Graph curr_node={curr_node_to_display_graph_for}/>
+          {/*<Chart
+            chartType="AreaChart"
+            width="auto"
+            height="auto"
+            data={data}
+            options={options}
+          />*/}
+          <Chart options={apexOptions} series={apexSeries} type="line" />;
         </div>
       </div>
     </>
