@@ -1,10 +1,10 @@
 import "bootstrap/dist/css/bootstrap.css";
+import "primereact/resources/themes/mira/theme.css";
+import "primereact/resources/primereact.css";
 import React, { useState } from "react";
 import example_tree from "./../files/exampleTree.json";
 import DataTableOfSegments from "./DataTableOfSegments.jsx";
 import DataTableOfMutations from "./DataTableOfMutations.jsx";
-import "primereact/resources/themes/mira/theme.css";
-import "primereact/resources/primereact.css";
 import { MagicTabSelect, MagicMotion } from "react-magic-motion";
 
 export default function Tabs({ send_from_tab_to_app }) {

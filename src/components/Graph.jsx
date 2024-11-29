@@ -4,7 +4,7 @@ import Highcharts from "highcharts"
 import example_tree from "./../files/exampleTree.json";
 
 function obtain_series_for_segment_x_of_curr_node(node_idx, segment_idx){
-    
+  
     let curr_segment_id = example_tree['tree']['nodes'][node_idx]['segments'][segment_idx]['segment_id']
     let curr_segment_number_of_maternal_copies = example_tree['tree']['nodes'][node_idx]['segments'][segment_idx]['x']
     let curr_segment_number_of_paternal_copies = example_tree['tree']['nodes'][node_idx]['segments'][segment_idx]['y']
@@ -87,22 +87,20 @@ function obtain_series_for_segment_x_of_curr_node(node_idx, segment_idx){
     return series
 }
 
-function obtain_series_for_all_segments_of_curr_node(curr_node_idx){
-    let number_of_segments = example_tree['segments'].length
-
-    let series_for_all_segments_of_curr_node = []
-    for(let i=0; i<number_of_segments; i++){
-        let [series_maternal, series_paternal] = obtain_series_for_segment_x_of_curr_node(curr_node_idx, i)
-        series_for_all_segments_of_curr_node.push(series_maternal)
-        series_for_all_segments_of_curr_node.push(series_paternal)
+function obtain_series_for_all_checked_segments_of_curr_node(curr_node_idx, idxs_of_checked_segments){
+    let series_for_all_checked_segments_of_curr_node = []
+    for(let i=0; i<idxs_of_checked_segments.length; i++){
+      let [series_maternal, series_paternal] = obtain_series_for_segment_x_of_curr_node(curr_node_idx, idxs_of_checked_segments[i])
+      series_for_all_checked_segments_of_curr_node.push(series_maternal)
+      series_for_all_checked_segments_of_curr_node.push(series_paternal)
     }
-    return series_for_all_segments_of_curr_node;
+    return series_for_all_checked_segments_of_curr_node;
 }
 
 
-export default function Graph({curr_node}) {
+export default function Graph({curr_clone, idxs_of_checked_mutations, idxs_of_checked_segments}) {
 
-    if(curr_node == null){
+    if(curr_clone == null){
         return (
             <>
             </>
@@ -136,18 +134,17 @@ export default function Graph({curr_node}) {
 
   let curr_node_idx = -1
   for (let i=0; i<example_tree['tree']['nodes'].length; i++){
-    if(example_tree['tree']['nodes'][i]['node_id'] == curr_node){
+    if(example_tree['tree']['nodes'][i]['node_id'] == curr_clone){
         curr_node_idx = i
     }
   }
 
   // obtain series for all segments of curr node
-  let series = obtain_series_for_all_segments_of_curr_node(curr_node_idx);
+  let series = obtain_series_for_all_checked_segments_of_curr_node(curr_node_idx, idxs_of_checked_segments);
 
-  let number_of_mutations = example_tree['snvs'].length;
   let snv_data = []
-  for(let i=0; i<number_of_mutations; i++){
-    let position = example_tree['snvs'][i]['position']/10**7
+  for(let i=0; i<idxs_of_checked_mutations.length; i++){
+    let position = example_tree['snvs'][idxs_of_checked_mutations[i]]['position']/10**7
     position = Math.round(position * 10) / 10
     snv_data.push([position*10, 0])
   }
@@ -219,7 +216,7 @@ export default function Graph({curr_node}) {
 
   return (
     <>
-        <HighchartsReact highcharts={Highcharts} options={options} height={250} width={700} />
+        <HighchartsReact highcharts={Highcharts} options={options} height={200} width={700} />
     </>
   );
 }

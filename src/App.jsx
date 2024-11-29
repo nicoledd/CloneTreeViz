@@ -10,6 +10,8 @@ import { MagicMotion } from "react-magic-motion";
 function App() {
   const [displayed_nodes, set_displayed_nodes] = useState([]);
   const [displayed_edges, set_displayed_edges] = useState([]);
+  const [saved_idxs_of_checked_segments, set_saved_idxs_of_checked_segments] = useState([]);
+  const [saved_idxs_of_checked_mutations, set_saved_idxs_of_checked_mutations] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   function obtainInitGraph() {
@@ -43,6 +45,8 @@ function App() {
     ) {
       set_displayed_nodes(initial_nodes);
       set_displayed_edges(initial_edges);
+      set_saved_idxs_of_checked_mutations(idxs_of_checked_mutations);
+      set_saved_idxs_of_checked_segments(idxs_of_checked_segments)
       return;
     }
     let [new_nodes, new_edges] = unionFind(
@@ -53,12 +57,18 @@ function App() {
     );
     set_displayed_nodes(new_nodes);
     set_displayed_edges(new_edges);
+    set_saved_idxs_of_checked_mutations(idxs_of_checked_mutations);
+    set_saved_idxs_of_checked_segments(idxs_of_checked_segments)
   };
 
   useEffect(() => {
     let [initial_nodes, initial_edges] = obtainInitGraph();
     set_displayed_nodes(initial_nodes);
     set_displayed_edges(initial_edges);
+    let number_of_mutations = example_tree["snvs"].length;
+    let number_of_segments = example_tree["segments"].length;
+    set_saved_idxs_of_checked_mutations(Array.from(Array(number_of_mutations).keys()));
+    set_saved_idxs_of_checked_segments(Array.from(Array(number_of_segments).keys()))
   }, []);
 
   return (
@@ -219,7 +229,7 @@ function App() {
             overflow: "scroll",
           }}
         >
-          <CloneTree nodes={displayed_nodes} edges={displayed_edges} />
+          <CloneTree nodes={displayed_nodes} edges={displayed_edges} idxs_of_checked_mutations={saved_idxs_of_checked_mutations} idxs_of_checked_segments={saved_idxs_of_checked_segments}/>
         </div>
       </div>
     </>
